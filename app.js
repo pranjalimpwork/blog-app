@@ -1,6 +1,11 @@
 const express = require('express');
 const connectDB = require('./database/database');
 const { UserRoute } = require('./routes');
+const dotenv = require('dotenv');
+dotenv.config()
+
+const port = process.env.PORT || 5050
+const MONGO_URL = process.env.MONGO_URL
 
 const app = express();
 
@@ -10,6 +15,8 @@ connectDB();
 
 app.use('/users', UserRoute);
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+  // console.log(`connected in ${MONGO_URL}`);
+
 });
