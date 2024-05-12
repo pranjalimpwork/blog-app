@@ -1,56 +1,9 @@
 const express = require('express');
-const {User} = require('../models/'); // Ensure you import User correctly
+const { User } = require('../models/'); // Ensure you import User correctly
 const bcrypt = require('bcryptjs');
-const authMiddleware = require('../utils/auth.helper'); // Authentication middleware
+const { authMiddleware } = require('../utils/auth.helper'); // Authentication middleware
 
 const router = express.Router();
-
-// Register a new user
-router.post('/signup', async (req, res) => {
-  const { username, email, password, country } = req.body;
-
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already exists.' });
-    }
-
-    const user = new User({ username, email, password, country });
-    await user.save();
-
-    // Generate token upon signup
-    const token = user.generateAuthToken();
-
-    res.status(201).json({ message: 'User registered successfully', token });
-  } catch (error) {
-    console.error('Error during signup:', error);
-    res.status(500).json({ message: 'Error during signup', error });
-  }
-});
-
-// User login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password.' });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Invalid email or password.' });
-    }
-
-    const token = user.generateAuthToken();
-
-    res.json({ message: 'Login successful', token });
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ message: 'Error during login', error });
-  }
-});
 
 // Get all users (requires authentication)
 router.get('/', authMiddleware, async (req, res) => {
@@ -80,20 +33,20 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // Update a user by ID (requires authentication)
-router.put('/:id', authMiddleware, async (req, res) => {
+router.patch('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const { username, email, password, country } = req.body;
 
   try {
     const updateData = { username, email, country };
-    
+
     // Hash the new password if provided
     if (password) {
       updateData.password = await bcrypt.hash(password, 10);
     }
 
     const user = await User.findByIdAndUpdate(id, updateData, { new: true });
-    
+
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }

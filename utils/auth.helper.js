@@ -1,8 +1,23 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const SALT_WORK_FACTOR = 10;
+
+function generateToken(payload) {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '3h' });
+}
+
+async function comparePasswords(candidatePassword, hashedPassword) {
+  return await bcrypt.compare(candidatePassword, hashedPassword);
+}
+
+async function hashPassword(password) {
+  const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+  return await bcrypt.hash(password, salt);
+}
 
 const authMiddleware = (req, res, next) => {
-  const token = req.header('Authorization');
-
+  const token = req.header('Authorization').split(' ')[1];
+  console.log('token', token);
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
@@ -16,4 +31,4 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-module.exports = authMiddleware;
+module.exports = { authMiddleware, generateToken, comparePasswords, hashPassword };
